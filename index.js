@@ -29,12 +29,12 @@ function getCounterValue(filePath) {
 
 // Helper function to update percentage files
 function updatePercentageFiles(counters) {
-    let totalCount = 0;
+    let totalCount = 386;
 
     // Calculate total count
-    Object.keys(counters).forEach(label => {
-        totalCount += counters[label].count;
-    });
+    // Object.keys(counters).forEach(label => {
+    //     totalCount += counters[label].count;
+    // });
 
     // Update percentage files
     Object.keys(counters).forEach(label => {
@@ -50,7 +50,7 @@ app.get('/api/counters', (req, res) => {
             return res.status(500).json({ error: 'Failed to read counters directory' });
         }
         const counters = {};
-        let totalCount = 0;
+        let totalCount = 386;
 
         // Read all counters and calculate total count
         files.forEach(file => {
@@ -61,7 +61,7 @@ app.get('/api/counters', (req, res) => {
                     count: value,
                     percentage: 0 // Initialize percentage
                 };
-                totalCount += value;
+                // totalCount += value;
             }
         });
 
