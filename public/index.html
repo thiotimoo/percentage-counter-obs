@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Counter App</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .counter {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .counter h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center mt-5">
+        <h5>Yok join TIM I.T OSIS!!! 🔥🔥🔥</h5>
+        <h1 class="mb-4">Yosuka-Counter</h1>
+        <h6>Khusus untuk live-counter OBS</h6>
+        <h6 class="mb-4">Buatan Timoo Divisi <u><b>Perlengkapan</b></u></h6>
+        <div id="counters" class="mb-4"></div>
+
+        <h2 class="mb-4">Create New Counter</h2>
+        <form id="new-label-form" class="form-inline justify-content-center">
+            <div class="form-group mb-2 mr-2">
+                <input
+                    type="text"
+                    id="new-label-name"
+                    class="form-control"
+                    placeholder="Enter new label name"
+                    required
+                />
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Create</button>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const countersElement = document.getElementById("counters");
+            const newLabelForm = document.getElementById("new-label-form");
+            const newLabelNameInput = document.getElementById("new-label-name");
+
+            function fetchCounters() {
+                fetch("/api/counters")
+                    .then((response) => response.json())
+                    .then((data) => {
+                        countersElement.innerHTML = ""; // Clear existing counters
+                        Object.keys(data).forEach((label) => {
+                            const { count, percentage } = data[label];
+                            countersElement.innerHTML += `
+                            <div class="counter card">
+                                <div class="card-body">
+                                    <h2 class="card-title">${label}</h2>
+                                    <p class="card-text">Value: <span id="counter-${label}">${count}</span></p>
+                                    <p class="card-text">Percentage: <span id="percentage-${label}">${percentage}%</span></p>
+                                    <button class="btn btn-success" onclick="updateCounter('${label}', 'increment')">Increment</button>
+                                    <button class="btn btn-danger" onclick="updateCounter('${label}', 'decrement')">Decrement</button>
+                                    <div class="mt-3">
+                                        <input type="text" id="new-label-${label}" class="form-control mb-2" placeholder="New label" />
+                                        <button class="btn btn-warning" onclick="updateLabel('${label}')">Update Label</button>
+                                        <button class="btn btn-secondary" onclick="deleteLabel('${label}')">Delete Label</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        });
+                    });
+            }
+
+            window.updateCounter = (label, action) => {
+                fetch(`/api/counters/${label}/${action}`, {
+                    method: "POST",
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        document.getElementById(
+                            `counter-${data.label}`
+                        ).textContent = data.count;
+                        fetchCounters(); // Refresh percentages after update
+                    });
+            };
+
+            window.updateLabel = (oldLabel) => {
+                const newLabel = document
+                    .getElementById(`new-label-${oldLabel}`)
+                    .value.trim();
+                if (newLabel && newLabel !== oldLabel) {
+                    fetch(`/api/counters/rename`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ oldLabel, newLabel }),
+                    })
+                        .then((response) => response.json())
+                        .then(() => {
+                            fetchCounters(); // Refresh counters and percentages
+                        })
+                        .catch((error) =>
+                            console.error("Error updating label:", error)
+                        );
+                }
+            };
+
+            window.deleteLabel = (label) => {
+                fetch(`/api/counters/${label}`, { method: "DELETE" })
+                    .then((response) => response.json())
+                    .then(() => {
+                        fetchCounters(); // Refresh counters and percentages
+                    });
+            };
+
+            newLabelForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                const newLabel = newLabelNameInput.value;
+                if (newLabel) {
+                    fetch("/api/counters/new", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ label: newLabel }),
+                    })
+                        .then((response) => response.json())
+                        .then(() => {
+                            newLabelNameInput.value = ""; // Clear input field
+                            fetchCounters(); // Refresh counters and percentages
+                        })
+                        .catch((error) =>
+                            console.error(
+                                "Error creating new label:",
+                                error
+                            )
+                        );
+                }
+            });
+
+            fetchCounters(); // Initial fetch
+        });
+    </script>
+</body>
+</html>
